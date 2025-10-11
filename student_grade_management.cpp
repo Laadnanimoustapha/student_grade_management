@@ -304,3 +304,100 @@ public:
                 }
                 break;
             }
+            case 5: {
+                if (it->grades.empty()) {
+                    std::cout << "No grades to modify." << '\n';
+                    break;
+                }
+                std::cout << "Enter grade index to modify (1-" << it->grades.size() << "): ";
+                std::getline(std::cin, input);
+                int index = 0;
+                if (tryParseInt(input, index) && index >= 1 && static_cast<std::size_t>(index) <= it->grades.size()) {
+                    std::cout << "Enter new grade (0-100): ";
+                    std::getline(std::cin, input);
+                    float grade = 0.0f;
+                    if (tryParseFloat(input, grade) && grade >= 0.0f && grade <= 100.0f) {
+                        it->grades[static_cast<std::size_t>(index) - 1] = grade;
+                        std::cout << "Grade updated." << '\n';
+                    } else {
+                        std::cout << "Invalid grade. No changes made." << '\n';
+                    }
+                } else {
+                    std::cout << "Invalid index. No changes made." << '\n';
+                }
+                break;
+            }
+            case 6: {
+                if (it->grades.empty()) {
+                    std::cout << "No grades to remove." << '\n';
+                    break;
+                }
+                std::cout << "Enter grade index to remove (1-" << it->grades.size() << "): ";
+                std::getline(std::cin, input);
+                int index = 0;
+                if (tryParseInt(input, index) && index >= 1 && static_cast<std::size_t>(index) <= it->grades.size()) {
+                    it->grades.erase(it->grades.begin() + (index - 1));
+                    std::cout << "Grade removed." << '\n';
+                } else {
+                    std::cout << "Invalid index. No changes made." << '\n';
+                }
+                break;
+            }
+            case 0:
+                modifying = false;
+                break;
+            default:
+                std::cout << "Invalid choice. Please try again." << '\n';
+                break;
+            }
+        }
+    }
+
+    void deleteStudent() {
+        if (students.empty()) {
+            std::cout << "\nNo students available to delete." << '\n';
+            return;
+        }
+
+        std::cout << "\n--- Delete Student ---" << '\n';
+        std::cout << "Enter student ID to delete: ";
+        std::string id;
+        std::getline(std::cin, id);
+        id = trim(id);
+
+        auto it = std::find_if(students.begin(), students.end(), [&](const Student &s) {
+            return s.id == id;
+        });
+
+        if (it == students.end()) {
+            std::cout << "No student found with ID: " << id << '\n';
+            return;
+        }
+
+        displayStudentDetails(*it);
+        std::cout << "Are you sure you want to delete this student? (y/n): ";
+        std::string confirmation;
+        std::getline(std::cin, confirmation);
+        if (!confirmation.empty() && (confirmation[0] == 'y' || confirmation[0] == 'Y')) {
+            students.erase(it);
+            std::cout << "Student deleted successfully." << '\n';
+        } else {
+            std::cout << "Deletion cancelled." << '\n';
+        }
+    }
+
+    void displayAll() const {
+        if (students.empty()) {
+            std::cout << "\nNo students available to display." << '\n';
+            return;
+        }
+
+        std::vector<int> ranks;
+        computeRanks(ranks);
+
+        std::cout << "\n--- Student List ---" << '\n';
+        std::cout << std::left << std::setw(25) << "Name"
+                  << std::setw(15) << "ID"
+                  << std::setw(10) << "GPA"
+                  << std::setw(5) << "Rank" << '\n';
+        std::cout << std::string(55, '-') << '\n';
