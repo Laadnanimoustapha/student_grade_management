@@ -208,3 +208,99 @@ public:
             }
             break;
         }
+
+        std::cout << "Enter student name: ";
+        std::getline(std::cin, student.name);
+        student.name = trim(student.name);
+        while (student.name.empty()) {
+            std::cout << "Name cannot be empty. Enter student name: ";
+            std::getline(std::cin, student.name);
+            student.name = trim(student.name);
+        }
+
+        student.grades = promptGradesFromUser();
+        students.push_back(std::move(student));
+        std::cout << "Student added successfully." << '\n';
+    }
+
+    void updateStudent() {
+        if (students.empty()) {
+            std::cout << "\nNo students available to update." << '\n';
+            return;
+        }
+
+        std::cout << "\n--- Update Student ---" << '\n';
+        std::cout << "Enter student ID to update: ";
+        std::string id;
+        std::getline(std::cin, id);
+        id = trim(id);
+
+        auto it = std::find_if(students.begin(), students.end(), [&](const Student &s) {
+            return s.id == id;
+        });
+
+        if (it == students.end()) {
+            std::cout << "No student found with ID: " << id << '\n';
+            return;
+        }
+
+        bool modifying = true;
+        while (modifying) {
+            displayStudentDetails(*it);
+            std::cout << "Choose an option:" << '\n';
+            std::cout << "1. Update Name" << '\n';
+            std::cout << "2. Update ID" << '\n';
+            std::cout << "3. Replace All Grades" << '\n';
+            std::cout << "4. Add Grade" << '\n';
+            std::cout << "5. Modify Grade" << '\n';
+            std::cout << "6. Remove Grade" << '\n';
+            std::cout << "0. Finish Updating" << '\n';
+            std::cout << "Your choice: ";
+
+            std::string input;
+            std::getline(std::cin, input);
+            int choice = -1;
+            tryParseInt(input, choice);
+
+            switch (choice) {
+            case 1: {
+                std::cout << "Enter new name: ";
+                std::getline(std::cin, it->name);
+                it->name = trim(it->name);
+                if (it->name.empty()) {
+                    std::cout << "Name cannot be empty. Keeping previous value." << '\n';
+                }
+                break;
+            }
+            case 2: {
+                std::cout << "Enter new ID: ";
+                std::string newId;
+                std::getline(std::cin, newId);
+                newId = trim(newId);
+                if (newId.empty()) {
+                    std::cout << "ID cannot be empty. Keeping previous value." << '\n';
+                } else if (idExists(newId, &(*it))) {
+                    std::cout << "ID already exists. Keeping previous value." << '\n';
+                } else {
+                    it->id = std::move(newId);
+                    std::cout << "ID updated successfully." << '\n';
+                }
+                break;
+            }
+            case 3: {
+                std::cout << "Replacing all grades." << '\n';
+                it->grades = promptGradesFromUser();
+                break;
+            }
+            case 4: {
+                std::cout << "Enter grade to add (0-100): ";
+                std::getline(std::cin, input);
+                float grade = 0.0f;
+                if (tryParseFloat(input, grade) && grade >= 0.0f && grade <= 100.0f) {
+                    it->grades.push_back(grade);
+                    std::cout << "Grade added." << '\n';
+                } else {
+                    std::cout << "Invalid grade. No changes made." << '\n';
+                }
+                break;
+            }
