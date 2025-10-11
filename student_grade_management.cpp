@@ -401,7 +401,7 @@ public:
                   << std::setw(10) << "GPA"
                   << std::setw(5) << "Rank" << '\n';
         std::cout << std::string(55, '-') << '\n';
-        
+
        for (std::size_t idx = 0; idx < students.size(); ++idx) {
             printStudentRow(students[idx], ranks.empty() ? 0 : ranks[idx]);
         }
@@ -500,3 +500,4 @@ public:
             std::getline(std::cin, nameFragment);
             std::string target = toLowerCopy(trim(nameFragment));
             bool found = false;
+            
