@@ -401,3 +401,102 @@ public:
                   << std::setw(10) << "GPA"
                   << std::setw(5) << "Rank" << '\n';
         std::cout << std::string(55, '-') << '\n';
+        
+       for (std::size_t idx = 0; idx < students.size(); ++idx) {
+            printStudentRow(students[idx], ranks.empty() ? 0 : ranks[idx]);
+        }
+    }
+
+    void displayStatistics() const {
+        if (students.empty()) {
+            std::cout << "\nNo students available for statistics." << '\n';
+            return;
+        }
+
+        double totalGpa = 0.0;
+        double totalGrades = 0.0;
+        std::size_t gradeCount = 0;
+        const Student *topStudent = nullptr;
+        const Student *bottomStudent = nullptr;
+        std::size_t honorsCount = 0;     // GPA >= 3.5
+        std::size_t probationCount = 0;  // GPA < 2.0
+
+        for (const auto &student : students) {
+            float gpa = student.calculateGPA();
+            totalGpa += gpa;
+
+            if (topStudent == nullptr || gpa > topStudent->calculateGPA()) {
+                topStudent = &student;
+            }
+            if (bottomStudent == nullptr || gpa < bottomStudent->calculateGPA()) {
+                bottomStudent = &student;
+            }
+
+            if (gpa >= 3.5f) {
+                ++honorsCount;
+            }
+            if (gpa < 2.0f) {
+                ++probationCount;
+            }
+
+            for (float grade : student.grades) {
+                totalGrades += grade;
+                ++gradeCount;
+            }
+        }
+
+        double averageGpa = totalGpa / static_cast<double>(students.size());
+        double averageGrade = gradeCount > 0 ? totalGrades / static_cast<double>(gradeCount) : 0.0;
+
+        std::cout << "\n--- Class Statistics ---" << '\n';
+        std::cout << "Total students      : " << students.size() << '\n';
+        std::cout << "Average GPA         : " << std::fixed << std::setprecision(2) << averageGpa << '\n';
+        std::cout << "Average grade       : " << std::fixed << std::setprecision(2) << averageGrade << '\n';
+        std::cout << "Students with honors: " << honorsCount << '\n';
+        std::cout << "On academic probation: " << probationCount << '\n';
+        if (topStudent != nullptr) {
+            std::cout << "Top student         : " << topStudent->name << " (" << topStudent->id
+                      << ", GPA: " << std::fixed << std::setprecision(2) << topStudent->calculateGPA() << ")" << '\n';
+        }
+        if (bottomStudent != nullptr) {
+            std::cout << "Lowest GPA student  : " << bottomStudent->name << " (" << bottomStudent->id
+                      << ", GPA: " << std::fixed << std::setprecision(2) << bottomStudent->calculateGPA() << ")" << '\n';
+        }
+    }
+
+    void searchStudent() const {
+        if (students.empty()) {
+            std::cout << "\nNo students available to search." << '\n';
+            return;
+        }
+
+        std::cout << "\n--- Search Student ---" << '\n';
+        std::cout << "1. Search by ID" << '\n';
+        std::cout << "2. Search by Name" << '\n';
+        std::cout << "Choose an option: ";
+
+        std::string input;
+        std::getline(std::cin, input);
+        int option = 0;
+        tryParseInt(input, option);
+
+        if (option == 1) {
+            std::cout << "Enter ID: ";
+            std::string id;
+            std::getline(std::cin, id);
+            id = trim(id);
+            auto it = std::find_if(students.begin(), students.end(), [&](const Student &s) {
+                return s.id == id;
+            });
+
+            if (it != students.end()) {
+                displayStudentDetails(*it);
+            } else {
+                std::cout << "No student found with ID: " << id << '\n';
+            }
+        } else if (option == 2) {
+            std::cout << "Enter name (partial matches allowed): ";
+            std::string nameFragment;
+            std::getline(std::cin, nameFragment);
+            std::string target = toLowerCopy(trim(nameFragment));
+            bool found = false;
