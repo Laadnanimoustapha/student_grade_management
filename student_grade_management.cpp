@@ -501,3 +501,96 @@ public:
             std::string target = toLowerCopy(trim(nameFragment));
             bool found = false;
             
+
+            std::cout << "\nMatching students:" << '\n';
+            std::cout << std::left << std::setw(25) << "Name"
+                      << std::setw(15) << "ID"
+                      << std::setw(10) << "GPA" << '\n';
+            std::cout << std::string(50, '-') << '\n';
+
+            for (const auto &student : students) {
+                if (toLowerCopy(student.name).find(target) != std::string::npos) {
+                    std::cout << std::left << std::setw(25) << student.name
+                              << std::setw(15) << student.id
+                              << std::setw(10) << std::fixed << std::setprecision(2) << student.calculateGPA()
+                              << '\n';
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                std::cout << "No students matched the provided name." << '\n';
+            }
+        } else {
+            std::cout << "Invalid option selected." << '\n';
+        }
+    }
+
+    void saveToFile(const std::string &filename = "student_data.txt") const {
+        std::ofstream outFile(filename);
+        if (!outFile) {
+            std::cout << "Failed to open " << filename << " for writing." << '\n';
+            return;
+        }
+
+        outFile << "STUDENT_DB_V2" << '\n';
+        outFile << students.size() << '\n';
+        for (const auto &student : students) {
+            outFile << student.id << '\n';
+            outFile << student.name << '\n';
+            outFile << student.grades.size() << '\n';
+            for (std::size_t i = 0; i < student.grades.size(); ++i) {
+                outFile << student.grades[i];
+                if (i + 1 < student.grades.size()) {
+                    outFile << ' ';
+                }
+            }
+            outFile << '\n';
+        }
+
+        std::cout << "Data saved to " << filename << '\n';
+    }
+
+    void loadFromFile(const std::string &filename = "student_data.txt") {
+        std::ifstream inFile(filename);
+        if (!inFile) {
+            std::cout << "No existing data file found. Starting with an empty database." << '\n';
+            return;
+        }
+
+        students.clear();
+        std::string line;
+        if (!std::getline(inFile, line)) {
+            std::cout << "Data file is empty." << '\n';
+            return;
+        }
+
+        std::size_t studentCount = 0;
+        bool usesNewFormat = (line == "STUDENT_DB_V2");
+        if (usesNewFormat) {
+            if (!std::getline(inFile, line) || !tryParseUnsigned(line, studentCount)) {
+                std::cout << "Failed to read student count. Data file may be corrupted." << '\n';
+                return;
+            }
+        } else {
+            if (!tryParseUnsigned(line, studentCount)) {
+                std::cout << "Failed to read student count. Data file may be corrupted." << '\n';
+                return;
+            }
+        }
+
+        bool dataTruncated = false;
+        for (std::size_t i = 0; i < studentCount; ++i) {
+            Student student;
+            if (!std::getline(inFile, student.id)) {
+                dataTruncated = true;
+                break;
+            }
+            if (!std::getline(inFile, student.name)) {
+                dataTruncated = true;
+                break;
+            }
+            if (!std::getline(inFile, line)) {
+                dataTruncated = true;
+                break;
+            }
