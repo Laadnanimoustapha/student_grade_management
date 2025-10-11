@@ -595,3 +595,170 @@ public:
                 break;
             }
             
+
+            std::size_t gradeCount = 0;
+            if (!tryParseUnsigned(line, gradeCount)) {
+                dataTruncated = true;
+                break;
+            }
+
+            if (!std::getline(inFile, line)) {
+                dataTruncated = true;
+                break;
+            }
+
+            student.grades.clear();
+            if (!line.empty()) {
+                std::stringstream gradeStream(line);
+                float grade = 0.0f;
+                while (gradeStream >> grade && student.grades.size() < gradeCount) {
+                    if (grade >= 0.0f && grade <= 100.0f) {
+                        student.grades.push_back(grade);
+                    }
+                }
+            }
+
+            while (student.grades.size() < gradeCount) {
+                if (!std::getline(inFile, line)) {
+                    dataTruncated = true;
+                    break;
+                }
+                if (line.empty()) {
+                    continue;
+                }
+                std::stringstream continuationStream(line);
+                float grade = 0.0f;
+                while (continuationStream >> grade && student.grades.size() < gradeCount) {
+                    if (grade >= 0.0f && grade <= 100.0f) {
+                        student.grades.push_back(grade);
+                    }
+                }
+            }
+
+            students.push_back(std::move(student));
+        }
+
+        if (dataTruncated) {
+            std::cout << "Data file ended unexpectedly. Loaded " << students.size()
+                      << " students before encountering an issue." << '\n';
+        } else {
+            std::cout << "Loaded " << students.size() << " students from " << filename << '\n';
+        }
+    }
+
+    void sortStudents() {
+        if (students.size() < 2) {
+            std::cout << "\nNot enough students to sort." << '\n';
+            return;
+        }
+
+        std::cout << "\n--- Sort Students ---" << '\n';
+        std::cout << "1. Sort by Name (A-Z)" << '\n';
+        std::cout << "2. Sort by GPA (High to Low)" << '\n';
+        std::cout << "3. Sort by ID" << '\n';
+        std::cout << "Choose an option: ";
+
+        std::string input;
+        std::getline(std::cin, input);
+        int option = 0;
+        tryParseInt(input, option);
+
+        if (option == 1) {
+            std::sort(students.begin(), students.end(), [&](const Student &a, const Student &b) {
+                std::string nameA = toLowerCopy(a.name);
+                std::string nameB = toLowerCopy(b.name);
+                if (nameA == nameB) {
+                    return a.id < b.id;
+                }
+                return nameA < nameB;
+            });
+            std::cout << "Students sorted alphabetically by name." << '\n';
+        } else if (option == 2) {
+            std::sort(students.begin(), students.end(), [&](const Student &a, const Student &b) {
+                float gpaA = a.calculateGPA();
+                float gpaB = b.calculateGPA();
+                if (std::fabs(gpaA - gpaB) > 1e-4f) {
+                    return gpaA > gpaB;
+                }
+                return a.name < b.name;
+            });
+            std::cout << "Students sorted by GPA in descending order." << '\n';
+        } else if (option == 3) {
+            std::sort(students.begin(), students.end(), [&](const Student &a, const Student &b) {
+                return a.id < b.id;
+            });
+            std::cout << "Students sorted by ID." << '\n';
+        } else {
+            std::cout << "Invalid option selected." << '\n';
+        }
+    }
+};
+
+void showMenu() {
+    std::cout << "\n===== Student Grade Management System =====" << '\n';
+    std::cout << "1. Add Student" << '\n';
+    std::cout << "2. Display All Students" << '\n';
+    std::cout << "3. Search Student" << '\n';
+    std::cout << "4. Sort Students" << '\n';
+    std::cout << "5. Update Student" << '\n';
+    std::cout << "6. Delete Student" << '\n';
+    std::cout << "7. Display Class Statistics" << '\n';
+    std::cout << "8. Save Data" << '\n';
+    std::cout << "9. Load Data" << '\n';
+    std::cout << "0. Exit" << '\n';
+    std::cout << "Select an option: ";
+}
+
+int main() {
+    GradeManager manager;
+    manager.loadFromFile();
+
+    bool running = true;
+    while (running) {
+        showMenu();
+        std::string input;
+        std::getline(std::cin, input);
+        int choice = -1;
+        GradeManager::tryParseInt(input, choice);
+
+        switch (choice) {
+        case 1:
+            manager.addStudent();
+            break;
+        case 2:
+            manager.displayAll();
+            break;
+        case 3:
+            manager.searchStudent();
+            break;
+        case 4:
+            manager.sortStudents();
+            break;
+        case 5:
+            manager.updateStudent();
+            break;
+        case 6:
+            manager.deleteStudent();
+            break;
+        case 7:
+            manager.displayStatistics();
+            break;
+        case 8:
+            manager.saveToFile();
+            break;
+        case 9:
+            manager.loadFromFile();
+            break;
+        case 0:
+            manager.saveToFile();
+            std::cout << "Exiting program. Goodbye!" << '\n';
+            running = false;
+            break;
+        default:
+            std::cout << "Invalid choice. Please select a valid option." << '\n';
+            break;
+        }
+    }
+
+    return 0;
+}
