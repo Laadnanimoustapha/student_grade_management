@@ -115,7 +115,7 @@ private:
             return &s != skip && s.id == id;
         });
     }
-    
+
 
     void printStudentRow(const Student &student, int rank) const {
         std::cout << std::left << std::setw(25) << student.name
@@ -660,41 +660,6 @@ public:
             std::cout << "Invalid option selected." << '\n';
         }
     }
-                displayStudentDetails(*it);
-            } else {
-                std::cout << "No student found with ID: " << id << '\n';
-            }
-        } else if (option == 2) {
-            std::cout << "Enter name (partial matches allowed): ";
-            std::string nameFragment;
-            std::getline(std::cin, nameFragment);
-            std::string target = toLowerCopy(trim(nameFragment));
-            bool found = false;
-            
-
-            std::cout << "\nMatching students:" << '\n';
-            std::cout << std::left << std::setw(25) << "Name"
-                      << std::setw(15) << "ID"
-                      << std::setw(10) << "GPA" << '\n';
-            std::cout << std::string(50, '-') << '\n';
-
-            for (const auto &student : students) {
-                if (toLowerCopy(student.name).find(target) != std::string::npos) {
-                    std::cout << std::left << std::setw(25) << student.name
-                              << std::setw(15) << student.id
-                              << std::setw(10) << std::fixed << std::setprecision(2) << student.calculateGPA()
-                              << '\n';
-                    found = true;
-                }
-            }
-
-            if (!found) {
-                std::cout << "No students matched the provided name." << '\n';
-            }
-        } else {
-            std::cout << "Invalid option selected." << '\n';
-        }
-    }
 
     void exportSingleReport(const Student &student, const std::string &directory = "reports") const {
         std::error_code errorCode;
@@ -808,7 +773,6 @@ public:
                 dataTruncated = true;
                 break;
             }
-            
 
             std::size_t gradeCount = 0;
             if (!tryParseUnsigned(line, gradeCount)) {
@@ -906,19 +870,34 @@ public:
             std::cout << "Invalid option selected." << '\n';
         }
     }
+
+    // Add missing method stubs to make the code compile
+    void exportToCSV() const {
+        std::cout << "Export to CSV functionality not implemented yet." << '\n';
+    }
+
+    void importFromCSV() {
+        std::cout << "Import from CSV functionality not implemented yet." << '\n';
+    }
+
+    void showTopPerformers() const {
+        std::cout << "Show top performers functionality not implemented yet." << '\n';
+    }
+
+    void filterStudents() const {
+        std::cout << "Filter students functionality not implemented yet." << '\n';
+    }
+
+    void exportProgressReports() const {
+        std::cout << "Export progress reports functionality not implemented yet." << '\n';
+    }
 };
 
 void showMenu() {
     std::cout << "\n===== Student Grade Management System =====" << '\n';
-    std::cout << "1. Add Student" << '\n';
-    std::cout << "2. Display All Students" << '\n';
-    std::cout << "3. Search Student" << '\n';
-    std::cout << "4. Sort Students" << '\n';
-    std::cout << "5. Update Student" << '\n';
-    std::cout << "6. Delete Student" << '\n';
-    std::cout << "7. Display Class Statistics" << '\n';
-    std::cout << "8. Save Data" << '\n';
-    std::cout << "9. Load Data" << '\n';
+    for (const auto& option : MAIN_MENU_OPTIONS) {
+        std::cout << option << '\n';
+    }
     std::cout << "0. Exit" << '\n';
     std::cout << "Select an option: ";
 }
@@ -933,7 +912,25 @@ int main() {
         std::string input;
         std::getline(std::cin, input);
         int choice = -1;
-        GradeManager::tryParseInt(input, choice);
+
+        // Use a local tryParseInt since the GradeManager one is private
+        auto tryParseInt = [](const std::string &text, int &value) {
+            std::string trimmed = text;
+            trimmed.erase(0, trimmed.find_first_not_of(" \t\r\n"));
+            trimmed.erase(trimmed.find_last_not_of(" \t\r\n") + 1);
+            std::stringstream ss(trimmed);
+            int temp = 0;
+            if (ss >> temp && ss.eof()) {
+                value = temp;
+                return true;
+            }
+            return false;
+        };
+
+        if (!tryParseInt(input, choice)) {
+            std::cout << "Invalid input. Please enter a number." << '\n';
+            continue;
+        }
 
         switch (choice) {
         case 1:
@@ -962,6 +959,21 @@ int main() {
             break;
         case 9:
             manager.loadFromFile();
+            break;
+        case 10:
+            manager.exportToCSV();
+            break;
+        case 11:
+            manager.importFromCSV();
+            break;
+        case 12:
+            manager.showTopPerformers();
+            break;
+        case 13:
+            manager.filterStudents();
+            break;
+        case 14:
+            manager.exportProgressReports();
             break;
         case 0:
             manager.saveToFile();
