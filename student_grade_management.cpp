@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -13,6 +15,22 @@
 namespace
 {
     constexpr float GPA_SCALE = 25.0f; // Converts percentage (0-100) to GPA (0-4.0)
+    constexpr std::array<const char *, 14> MAIN_MENU_OPTIONS = {
+        "1. Add Student",
+        "2. Display All Students",
+        "3. Search Student",
+        "4. Sort Students",
+        "5. Update Student",
+        "6. Delete Student",
+        "7. Display Class Statistics",
+        "8. Save Data",
+        "9. Load Data",
+        "10. Export to CSV",
+        "11. Import from CSV",
+        "12. Show Top Performers",
+        "13. Filter Students",
+        "14. Export Progress Reports"
+    };
 }
 
 class Student {
@@ -106,6 +124,30 @@ private:
                   << std::setw(5) << rank << '\n';
     }
 
+    static std::string formatGradeTrend(const std::vector<float> &grades) {
+        if (grades.size() < 2) {
+            return "N/A";
+        }
+
+        std::size_t upCount = 0;
+        std::size_t downCount = 0;
+        std::size_t steadyCount = 0;
+        for (std::size_t i = 1; i < grades.size(); ++i) {
+            const float diff = grades[i] - grades[i - 1];
+            if (std::fabs(diff) < 1e-3f) {
+                ++steadyCount;
+            } else if (diff > 0.0f) {
+                ++upCount;
+            } else {
+                ++downCount;
+            }
+        }
+
+        std::stringstream trend;
+        trend << upCount << "↑ " << downCount << "↓ " << steadyCount << "→";
+        return trend.str();
+    }
+
     void displayStudentDetails(const Student &student) const {
         std::cout << "\nStudent Details" << '\n';
         std::cout << std::string(50, '-') << '\n';
@@ -120,6 +162,13 @@ private:
             for (std::size_t i = 0; i < student.grades.size(); ++i) {
                 std::cout << "  [" << (i + 1) << "] " << std::fixed << std::setprecision(2) << student.grades[i] << '\n';
             }
+        }
+        std::cout << "Grade Trend       : " << formatGradeTrend(student.grades) << '\n';
+        if (!student.grades.empty()) {
+            std::cout << "Highest Grade     : " << std::fixed << std::setprecision(2)
+                      << *std::max_element(student.grades.begin(), student.grades.end()) << '\n';
+            std::cout << "Lowest Grade      : " << std::fixed << std::setprecision(2)
+                      << *std::min_element(student.grades.begin(), student.grades.end()) << '\n';
         }
         std::cout << std::string(50, '-') << '\n';
     }
@@ -386,6 +435,30 @@ public:
         }
     }
 
+    void displayCompactList(const std::vector<std::size_t> &indices) const {
+        if (indices.empty()) {
+            std::cout << "No matching students." << '\n';
+            return;
+        }
+
+        std::vector<int> ranks;
+        computeRanks(ranks);
+
+        std::cout << std::left << std::setw(25) << "Name"
+                  << std::setw(15) << "ID"
+                  << std::setw(10) << "GPA"
+                  << std::setw(5) << "Rank" << '\n';
+        std::cout << std::string(55, '-') << '\n';
+
+        for (std::size_t listIndex = 0; listIndex < indices.size(); ++listIndex) {
+            const std::size_t studentIndex = indices[listIndex];
+            if (studentIndex >= students.size()) {
+                continue;
+            }
+            printStudentRow(students[studentIndex], ranks.empty() ? 0 : ranks[studentIndex]);
+        }
+    }
+
     void displayAll() const {
         if (students.empty()) {
             std::cout << "\nNo students available to display." << '\n';
@@ -404,6 +477,22 @@ public:
 
        for (std::size_t idx = 0; idx < students.size(); ++idx) {
             printStudentRow(students[idx], ranks.empty() ? 0 : ranks[idx]);
+        }
+    }
+
+    static void printHistogram(const std::array<std::size_t, 5> &buckets) {
+        const std::array<const char *, 5> labels = {
+            "90-100",
+            "80-89",
+            "70-79",
+            "60-69",
+            "0-59"
+        };
+
+        std::cout << "\nGPA Distribution (approx via percentages):" << '\n';
+        for (std::size_t i = 0; i < buckets.size(); ++i) {
+            std::cout << std::setw(7) << labels[i] << " | ";
+            std::cout << std::string(buckets[i], '*') << " (" << buckets[i] << ")" << '\n';
         }
     }
 
@@ -448,6 +537,23 @@ public:
         double averageGpa = totalGpa / static_cast<double>(students.size());
         double averageGrade = gradeCount > 0 ? totalGrades / static_cast<double>(gradeCount) : 0.0;
 
+        std::array<std::size_t, 5> gradeBuckets = {0, 0, 0, 0, 0};
+        for (const auto &student : students) {
+            for (float grade : student.grades) {
+                if (grade >= 90.0f) {
+                    ++gradeBuckets[0];
+                } else if (grade >= 80.0f) {
+                    ++gradeBuckets[1];
+                } else if (grade >= 70.0f) {
+                    ++gradeBuckets[2];
+                } else if (grade >= 60.0f) {
+                    ++gradeBuckets[3];
+                } else {
+                    ++gradeBuckets[4];
+                }
+            }
+        }
+
         std::cout << "\n--- Class Statistics ---" << '\n';
         std::cout << "Total students      : " << students.size() << '\n';
         std::cout << "Average GPA         : " << std::fixed << std::setprecision(2) << averageGpa << '\n';
@@ -462,6 +568,8 @@ public:
             std::cout << "Lowest GPA student  : " << bottomStudent->name << " (" << bottomStudent->id
                       << ", GPA: " << std::fixed << std::setprecision(2) << bottomStudent->calculateGPA() << ")" << '\n';
         }
+
+        printHistogram(gradeBuckets);
     }
 
     void searchStudent() const {
@@ -473,6 +581,7 @@ public:
         std::cout << "\n--- Search Student ---" << '\n';
         std::cout << "1. Search by ID" << '\n';
         std::cout << "2. Search by Name" << '\n';
+        std::cout << "3. Search by GPA Range" << '\n';
         std::cout << "Choose an option: ";
 
         std::string input;
@@ -490,6 +599,67 @@ public:
             });
 
             if (it != students.end()) {
+                displayStudentDetails(*it);
+            } else {
+                std::cout << "No student found with ID: " << id << '\n';
+            }
+        } else if (option == 2) {
+            std::cout << "Enter name (partial matches allowed): ";
+            std::string nameFragment;
+            std::getline(std::cin, nameFragment);
+            std::string target = toLowerCopy(trim(nameFragment));
+            std::vector<std::size_t> matches;
+
+            for (std::size_t i = 0; i < students.size(); ++i) {
+                if (toLowerCopy(students[i].name).find(target) != std::string::npos) {
+                    matches.push_back(i);
+                }
+            }
+
+            if (matches.empty()) {
+                std::cout << "No students matched the provided name." << '\n';
+            } else {
+                std::cout << "\nMatching students:" << '\n';
+                displayCompactList(matches);
+            }
+        } else if (option == 3) {
+            std::cout << "Enter minimum GPA (0 - 4.0): ";
+            std::string minInput;
+            std::getline(std::cin, minInput);
+            float minGpa = 0.0f;
+            if (!tryParseFloat(minInput, minGpa)) {
+                std::cout << "Invalid minimum GPA." << '\n';
+                return;
+            }
+
+            std::cout << "Enter maximum GPA (0 - 4.0): ";
+            std::string maxInput;
+            std::getline(std::cin, maxInput);
+            float maxGpa = 4.0f;
+            if (!tryParseFloat(maxInput, maxGpa)) {
+                std::cout << "Invalid maximum GPA." << '\n';
+                return;
+            }
+
+            if (minGpa > maxGpa) {
+                std::swap(minGpa, maxGpa);
+            }
+
+            std::vector<std::size_t> matches;
+            for (std::size_t i = 0; i < students.size(); ++i) {
+                float gpa = students[i].calculateGPA();
+                if (gpa >= minGpa && gpa <= maxGpa) {
+                    matches.push_back(i);
+                }
+            }
+
+            std::cout << "\nStudents with GPA between " << std::fixed << std::setprecision(2)
+                      << minGpa << " and " << maxGpa << ":" << '\n';
+            displayCompactList(matches);
+        } else {
+            std::cout << "Invalid option selected." << '\n';
+        }
+    }
                 displayStudentDetails(*it);
             } else {
                 std::cout << "No student found with ID: " << id << '\n';
@@ -524,6 +694,50 @@ public:
         } else {
             std::cout << "Invalid option selected." << '\n';
         }
+    }
+
+    void exportSingleReport(const Student &student, const std::string &directory = "reports") const {
+        std::error_code errorCode;
+        if (!std::filesystem::exists(directory)) {
+            std::filesystem::create_directories(directory, errorCode);
+            if (errorCode) {
+                std::cout << "Failed to create reports directory: " << errorCode.message() << '\n';
+                return;
+            }
+        }
+
+        const std::string filePath = directory + "/" + student.id + "_report.txt";
+        std::ofstream reportFile(filePath);
+        if (!reportFile) {
+            std::cout << "Could not open report file for student " << student.id << '\n';
+            return;
+        }
+
+        reportFile << "Student Progress Report" << '\n';
+        reportFile << std::string(60, '=') << '\n';
+        reportFile << "Name             : " << student.name << '\n';
+        reportFile << "ID               : " << student.id << '\n';
+        reportFile << "GPA              : " << std::fixed << std::setprecision(2) << student.calculateGPA() << '\n';
+        reportFile << "Grade Trend      : " << formatGradeTrend(student.grades) << '\n';
+        if (!student.grades.empty()) {
+            reportFile << "Highest Grade    : " << std::fixed << std::setprecision(2)
+                       << *std::max_element(student.grades.begin(), student.grades.end()) << '\n';
+            reportFile << "Lowest Grade     : " << std::fixed << std::setprecision(2)
+                       << *std::min_element(student.grades.begin(), student.grades.end()) << '\n';
+            reportFile << "Grades           : ";
+            for (std::size_t i = 0; i < student.grades.size(); ++i) {
+                reportFile << std::fixed << std::setprecision(2) << student.grades[i];
+                if (i + 1 < student.grades.size()) {
+                    reportFile << ", ";
+                }
+            }
+            reportFile << '\n';
+        } else {
+            reportFile << "Grades           : None" << '\n';
+        }
+
+        reportFile << std::string(60, '=') << '\n';
+        std::cout << "Progress report exported to " << filePath << '\n';
     }
 
     void saveToFile(const std::string &filename = "student_data.txt") const {
