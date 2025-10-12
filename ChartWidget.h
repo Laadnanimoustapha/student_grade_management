@@ -2,22 +2,15 @@
 #define CHARTWIDGET_H
 
 #include <QWidget>
-#include <QtCharts>
-#include "GradeManager.h"
-
-QT_CHARTS_USE_NAMESPACE
 
 class ChartWidget : public QWidget {
     Q_OBJECT
 
 public:
     explicit ChartWidget(QWidget* parent = nullptr);
-    void updateChart(const GradeManager::ClassStatistics& stats);
+    void updateChart();
 
 private:
-    QChart* chart;
-    QChartView* chartView;
-    
     void setupChart();
 };
 
