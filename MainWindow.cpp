@@ -531,6 +531,7 @@ void MainWindow::clearStudentForm() {
     deleteStudentBtn->setEnabled(false);
 }
 
+
 // Helper function to get search tab
 QWidget* MainWindow::searchTab() {
     return mainTabWidget->widget(1);
