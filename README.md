@@ -1,18 +1,17 @@
 # Student Grade Management System (C++)
 
-A robust C++ console application for managing student records, grades, and GPAs.
+A robust C++ console application for managing student records, grades, and GPAs, featuring a **Professional Text User Interface (TUI)**.
 
 ## Features
+- **Professional TUI**: Clear screens, ASCII art banners, and formatted data tables.
 - **Add Student**: Register students with ID, Name, and grades for Math, Science, and English.
-- **View All**: Display a formatted table of all students with calculated averages and letter grades.
-- **Search**: Find specific students by ID.
-- **Modify**: Update grades for existing students.
-- **Delete**: Remove student records.
-- **Persistence**: Automatically saves and loads data to `students.txt`.
+- **View All**: Display a clean table of all students with calculated averages.
+- **Search**: Find specific students quickly by ID.
+- **Persistence**: Automatically saves/loads data securely to `students.txt`.
 
 ## How to Compile & Run
-1. Ensure you have a C++ compiler (g++, clang, or MSVC).
-2. Open strings terminal in the project directory.
+1. Ensure you have a C++ compiler.
+2. Open terminal in the project directory.
 3. Run:
    ```bash
    g++ MAIN.CPP -o grade_manager
@@ -20,14 +19,16 @@ A robust C++ console application for managing student records, grades, and GPAs.
    ```
 
 ## File Structure
-- `MAIN.CPP`: Contains the entire source code (Classes: `Student`, `GradeSystem`).
-- `students.txt`: Auto-generated file for storing records.
+- `MAIN.CPP`: Source code with enhanced `UI` namespace.
+- `students.txt`: Database file.
 
 ## Project Stats
-- **Total Lines of Code:** ~190 lines (including comments and blank lines).
+- **Total Lines of Code:** ~230 lines
     
 ---
 [![Free Palestine](https://img.shields.io/badge/Free-Palestine-CE1126?labelColor=000000&color=007A3D)](#support-palestine)
 
-![Made By Laadnani](https://img.shields.io/badge/MADE%20BY-LAADNANI-blue?style=for-the-badge)  
-[https://github.com/Laadnanimoustapha](https://github.com/Laadnanimoustapha)
+<div align="center">
+  <h3>✨ MADE BY LAADNANI ✨</h3>
+  <p><a href="https://github.com/Laadnanimoustapha">Visit GitHub Profile</a></p>
+</div>

@@ -5,8 +5,43 @@
 #include <iomanip>
 #include <limits>
 #include <algorithm>
+#include <cstdlib> // For system()
 
 using namespace std;
+
+// --- Utils for UI ---
+namespace UI {
+    void clearScreen() {
+        #ifdef _WIN32
+            system("cls");
+        #else
+            system("clear");
+        #endif
+    }
+
+    void pause() {
+        cout << "\nPress Enter to continue...";
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.get();
+    }
+
+    void printBanner() {
+        cout << "================================================================================\n";
+        cout << "   _____ _______ _    _ _____  ______ _   _ _______    \n";
+        cout << "  / ____|__   __| |  | |  __ \\|  ____| \\ | |__   __|   \n";
+        cout << " | (___    | |  | |  | | |  | | |__  |  \\| |  | |      \n";
+        cout << "  \\___ \\   | |  | |  | | |  | |  __| | . ` |  | |      \n";
+        cout << "  ____) |  | |  | |__| | |__| | |____| |\\  |  | |      \n";
+        cout << " |_____/   |_|   \\____/|_____/|______|_| \\_|  |_|      \n";
+        cout << "                                                       \n";
+        cout << "      G R A D E   M A N A G E M E N T   S Y S T E M    \n";
+        cout << "================================================================================\n";
+    }
+
+    void printLine() {
+        cout << "+----------+----------------------+----------+----------+----------+----------+-------+\n";
+    }
+}
 
 // --- Student Structure ---
 struct Student {
@@ -42,10 +77,14 @@ public:
     }
 
     void addStudent() {
+        UI::clearScreen();
+        UI::printBanner();
+        cout << "\n[ ADD NEW STUDENT ]\n";
+        
         Student s;
-        cout << "\nEnter Student ID: ";
+        cout << ">> Enter Student ID: ";
         while (!(cin >> s.id)) {
-            cout << "Invalid input. Enter a number: ";
+            cout << "!! Invalid input. Enter a number: ";
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
@@ -54,57 +93,80 @@ public:
         // Check for duplicate ID
         for (const auto& existing : students) {
             if (existing.id == s.id) {
-                cout << "Error: Student with ID " << s.id << " already exists.\n";
+                cout << "!! Error: Student with ID " << s.id << " already exists.\n";
+                UI::pause();
                 return;
             }
         }
 
-        cout << "Enter Name: ";
+        cout << ">> Enter Name: ";
         getline(cin, s.name);
 
-        cout << "Enter Math Grade (0-100): ";
+        cout << ">> Enter Math Grade (0-100): ";
         s.mathGrade = getValidGrade();
-        cout << "Enter Science Grade (0-100): ";
+        cout << ">> Enter Science Grade (0-100): ";
         s.scienceGrade = getValidGrade();
-        cout << "Enter English Grade (0-100): ";
+        cout << ">> Enter English Grade (0-100): ";
         s.englishGrade = getValidGrade();
 
         students.push_back(s);
-        cout << "Student added successfully!\n";
+        cout << "\n[SUCCESS] Student added successfully!\n";
         saveData();
+        UI::pause();
     }
 
     void displayAll() const {
+        UI::clearScreen();
+        UI::printBanner();
+        cout << "\n[ STUDENT RECORDS ]\n";
+        
         if (students.empty()) {
-            cout << "\nNo students found.\n";
+            cout << "\nNo students found in the system.\n";
+            UI::pause();
             return;
         }
+
         printHeader();
         for (const auto& s : students) {
             printStudent(s);
         }
+        UI::printLine();
+        
+        cout << "\nTotal Students: " << students.size() << "\n";
+        UI::pause();
     }
 
     void searchStudent() const {
+        UI::clearScreen();
+        UI::printBanner();
+        cout << "\n[ SEARCH STUDENT ]\n";
+
         int id;
-        cout << "\nEnter Student ID to search: ";
+        cout << ">> Enter Student ID to search: ";
         cin >> id;
         
         bool found = false;
         for (const auto& s : students) {
             if (s.id == id) {
+                cout << "\nResult Found:\n";
                 printHeader();
                 printStudent(s);
+                UI::printLine();
                 found = true;
                 break;
             }
         }
-        if (!found) cout << "Student not found.\n";
+        if (!found) cout << "\n[INFO] Student with ID " << id << " not found.\n";
+        UI::pause();
     }
 
     void deleteStudent() {
+        UI::clearScreen();
+        UI::printBanner();
+        cout << "\n[ DELETE STUDENT ]\n";
+
         int id;
-        cout << "\nEnter Student ID to delete: ";
+        cout << ">> Enter Student ID to delete: ";
         cin >> id;
 
         auto it = remove_if(students.begin(), students.end(), [id](const Student& s) {
@@ -113,40 +175,48 @@ public:
 
         if (it != students.end()) {
             students.erase(it, students.end());
-            cout << "Student deleted successfully.\n";
+            cout << "\n[SUCCESS] Student deleted successfully.\n";
             saveData();
         } else {
-            cout << "Student not found.\n";
+            cout << "\n[INFO] Student not found.\n";
         }
+        UI::pause();
     }
 
     void modifyGrades() {
+        UI::clearScreen();
+        UI::printBanner();
+        cout << "\n[ MODIFY GRADES ]\n";
+
         int id;
-        cout << "\nEnter Student ID to modify: ";
+        cout << ">> Enter Student ID to modify: ";
         cin >> id;
 
         for (auto& s : students) {
             if (s.id == id) {
-                cout << "Editing grades for " << s.name << ":\n";
-                cout << "New Math Grade: ";
+                cout << "\nEditing grades for: " << s.name << "\n";
+                cout << ">> New Math Grade: ";
                 s.mathGrade = getValidGrade();
-                cout << "New Science Grade: ";
+                cout << ">> New Science Grade: ";
                 s.scienceGrade = getValidGrade();
-                cout << "New English Grade: ";
+                cout << ">> New English Grade: ";
                 s.englishGrade = getValidGrade();
-                cout << "Grades updated.\n";
+                
+                cout << "\n[SUCCESS] Grades updated.\n";
                 saveData();
+                UI::pause();
                 return;
             }
         }
-        cout << "Student not found.\n";
+        cout << "\n[INFO] Student not found.\n";
+        UI::pause();
     }
 
 private:
     float getValidGrade() {
         float grade;
         while (!(cin >> grade) || grade < 0 || grade > 100) {
-            cout << "Invalid grade. Enter 0-100: ";
+            cout << "!! Invalid grade. Enter 0-100: ";
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
@@ -154,25 +224,25 @@ private:
     }
 
     void printHeader() const {
-        cout << "\n--------------------------------------------------------------------------------\n";
-        cout << left << setw(10) << "ID" 
-             << setw(20) << "Name" 
-             << setw(10) << "Math" 
-             << setw(10) << "Science" 
-             << setw(10) << "English" 
-             << setw(10) << "Average" 
-             << setw(5) << "Grade" << "\n";
-        cout << "--------------------------------------------------------------------------------\n";
+        UI::printLine();
+        cout << "| " << left << setw(8) << "ID" 
+             << " | " << setw(20) << "Name" 
+             << " | " << setw(8) << "Math" 
+             << " | " << setw(8) << "Science" 
+             << " | " << setw(8) << "English" 
+             << " | " << setw(8) << "Average" 
+             << " | " << setw(5) << "Grade" << " |\n";
+        UI::printLine();
     }
 
     void printStudent(const Student& s) const {
-        cout << left << setw(10) << s.id 
-             << setw(20) << s.name 
-             << setw(10) << s.mathGrade 
-             << setw(10) << s.scienceGrade 
-             << setw(10) << s.englishGrade 
-             << fixed << setprecision(2) << setw(10) << s.calculateAverage() 
-             << setw(5) << s.getLetterGrade() << "\n";
+        cout << "| " << left << setw(8) << s.id 
+             << " | " << setw(20) << s.name 
+             << " | " << setw(8) << s.mathGrade 
+             << " | " << setw(8) << s.scienceGrade 
+             << " | " << setw(8) << s.englishGrade 
+             << " | " << fixed << setprecision(2) << setw(8) << s.calculateAverage() 
+             << " | " << setw(5) << s.getLetterGrade() << " |\n";
     }
 
     void saveData() const {
@@ -220,21 +290,28 @@ int main() {
     int choice;
 
     do {
-        cout << "\n=== Student Grade Management System ===\n";
-        cout << "1. Add Student\n";
-        cout << "2. Display All Students\n";
-        cout << "3. Search Student\n";
-        cout << "4. Modify Grades\n";
-        cout << "5. Delete Student\n";
-        cout << "6. Exit\n";
-        cout << "Enter choice: ";
+        UI::clearScreen();
+        UI::printBanner();
+        cout << "\n";
+        cout << "    [1] Add Student\n";
+        cout << "    [2] Display All Students\n";
+        cout << "    [3] Search Student\n";
+        cout << "    [4] Modify Grades\n";
+        cout << "    [5] Delete Student\n";
+        cout << "    [6] Exit\n\n";
+        cout << ">> Select an option: ";
         
         if (!(cin >> choice)) {
-            cout << "Invalid input.\n";
+            cout << "!! Invalid input.\n";
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            UI::pause();
             continue;
         }
+
+        cin.ignore(); // Clear buffer for any subsequent getlines if necessary for mixed input
+        // (Though pure numeric choice doesn't strictly need it if next calls handle it well, 
+        //  but safer for the pauses)
 
         switch (choice) {
             case 1: system.addStudent(); break;
@@ -242,8 +319,10 @@ int main() {
             case 3: system.searchStudent(); break;
             case 4: system.modifyGrades(); break;
             case 5: system.deleteStudent(); break;
-            case 6: cout << "Exiting...\n"; break;
-            default: cout << "Invalid choice. Try again.\n";
+            case 6: cout << "\nExiting... Thank you for using Student Manager!\n"; break;
+            default: 
+                cout << "!! Invalid choice. Try again.\n";
+                UI::pause();
         }
     } while (choice != 6);
 
